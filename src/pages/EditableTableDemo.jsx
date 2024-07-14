@@ -9,11 +9,12 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Filter, FileOutput, Plus, Pencil, Trash2 } from "lucide-react";
+import { Filter, FileOutput, Plus, Pencil, Trash2, Upload } from "lucide-react";
 import { useAnimals, useAddAnimal, useUpdateAnimal, useDeleteAnimal } from "@/integrations/supabase";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase";
 
 const EditableTableDemo = () => {
   const { data: animals, isLoading, isError } = useAnimals();
@@ -23,6 +24,8 @@ const EditableTableDemo = () => {
 
   const [editingAnimal, setEditingAnimal] = useState(null);
   const [newAnimal, setNewAnimal] = useState({ name: "", species: "", image_url: "" });
+  const [file, setFile] = useState(null);
+  const [editFile, setEditFile] = useState(null);
 
   if (isLoading) {
     return <div className="container mx-auto px-4 py-8">Loading...</div>;
@@ -32,10 +35,42 @@ const EditableTableDemo = () => {
     return <div className="container mx-auto px-4 py-8">Error fetching animals data.</div>;
   }
 
+  const handleFileChange = (event, isEdit = false) => {
+    const selectedFile = event.target.files[0];
+    if (isEdit) {
+      setEditFile(selectedFile);
+    } else {
+      setFile(selectedFile);
+    }
+  };
+
+  const uploadImage = async (file) => {
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${Math.random()}.${fileExt}`;
+    const { data, error } = await supabase.storage
+      .from('animals')
+      .upload(fileName, file);
+
+    if (error) {
+      throw error;
+    }
+
+    const { data: { publicUrl } } = supabase.storage
+      .from('animals')
+      .getPublicUrl(fileName);
+
+    return publicUrl;
+  };
+
   const handleAddAnimal = async () => {
     try {
-      await addAnimalMutation.mutateAsync(newAnimal);
+      let imageUrl = newAnimal.image_url;
+      if (file) {
+        imageUrl = await uploadImage(file);
+      }
+      await addAnimalMutation.mutateAsync({ ...newAnimal, image_url: imageUrl });
       setNewAnimal({ name: "", species: "", image_url: "" });
+      setFile(null);
       toast.success("Animal added successfully");
     } catch (error) {
       toast.error("Failed to add animal");
@@ -44,8 +79,13 @@ const EditableTableDemo = () => {
 
   const handleUpdateAnimal = async () => {
     try {
-      await updateAnimalMutation.mutateAsync(editingAnimal);
+      let imageUrl = editingAnimal.image_url;
+      if (editFile) {
+        imageUrl = await uploadImage(editFile);
+      }
+      await updateAnimalMutation.mutateAsync({ ...editingAnimal, image_url: imageUrl });
       setEditingAnimal(null);
+      setEditFile(null);
       toast.success("Animal updated successfully");
     } catch (error) {
       toast.error("Failed to update animal");
@@ -89,8 +129,8 @@ const EditableTableDemo = () => {
                   <Input id="species" value={newAnimal.species} onChange={(e) => setNewAnimal({...newAnimal, species: e.target.value})} className="col-span-3" />
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="image_url" className="text-right">Image URL</Label>
-                  <Input id="image_url" value={newAnimal.image_url} onChange={(e) => setNewAnimal({...newAnimal, image_url: e.target.value})} className="col-span-3" />
+                  <Label htmlFor="image" className="text-right">Image</Label>
+                  <Input id="image" type="file" onChange={(e) => handleFileChange(e)} className="col-span-3" />
                 </div>
               </div>
               <Button onClick={handleAddAnimal}>Add Animal</Button>
@@ -143,9 +183,15 @@ const EditableTableDemo = () => {
                               <Input id="edit-species" value={editingAnimal.species} onChange={(e) => setEditingAnimal({...editingAnimal, species: e.target.value})} className="col-span-3" />
                             </div>
                             <div className="grid grid-cols-4 items-center gap-4">
-                              <Label htmlFor="edit-image_url" className="text-right">Image URL</Label>
-                              <Input id="edit-image_url" value={editingAnimal.image_url} onChange={(e) => setEditingAnimal({...editingAnimal, image_url: e.target.value})} className="col-span-3" />
+                              <Label htmlFor="edit-image" className="text-right">Image</Label>
+                              <Input id="edit-image" type="file" onChange={(e) => handleFileChange(e, true)} className="col-span-3" />
                             </div>
+                            {editingAnimal.image_url && (
+                              <div className="grid grid-cols-4 items-center gap-4">
+                                <Label className="text-right">Current Image</Label>
+                                <img src={editingAnimal.image_url} alt={editingAnimal.name} className="w-24 h-24 object-cover rounded col-span-3" />
+                              </div>
+                            )}
                           </div>
                         )}
                         <Button onClick={handleUpdateAnimal}>Update Animal</Button>
