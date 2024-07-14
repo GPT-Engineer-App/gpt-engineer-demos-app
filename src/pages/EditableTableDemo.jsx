@@ -9,12 +9,20 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Filter, FileOutput, Plus, Pencil, Trash2, Upload } from "lucide-react";
+import { Filter, FileOutput, Plus, MoreHorizontal } from "lucide-react";
 import { useAnimals, useAddAnimal, useUpdateAnimal, useDeleteAnimal } from "@/integrations/supabase";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const EditableTableDemo = () => {
   const { data: animals, isLoading, isError } = useAnimals();
@@ -26,6 +34,8 @@ const EditableTableDemo = () => {
   const [newAnimal, setNewAnimal] = useState({ name: "", species: "", image_url: "" });
   const [file, setFile] = useState(null);
   const [editFile, setEditFile] = useState(null);
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
 
   if (isLoading) {
     return <div className="container mx-auto px-4 py-8">Loading...</div>;
@@ -71,6 +81,7 @@ const EditableTableDemo = () => {
       await addAnimalMutation.mutateAsync({ ...newAnimal, image_url: imageUrl });
       setNewAnimal({ name: "", species: "", image_url: "" });
       setFile(null);
+      setIsAddDialogOpen(false);
       toast.success("Animal added successfully");
     } catch (error) {
       toast.error("Failed to add animal");
@@ -86,6 +97,7 @@ const EditableTableDemo = () => {
       await updateAnimalMutation.mutateAsync({ ...editingAnimal, image_url: imageUrl });
       setEditingAnimal(null);
       setEditFile(null);
+      setIsEditDialogOpen(false);
       toast.success("Animal updated successfully");
     } catch (error) {
       toast.error("Failed to update animal");
@@ -101,6 +113,29 @@ const EditableTableDemo = () => {
     }
   };
 
+  const ActionMenu = ({ animal }) => (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="ghost" className="h-8 w-8 p-0">
+          <span className="sr-only">Open menu</span>
+          <MoreHorizontal className="h-4 w-4" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end">
+        <DropdownMenuLabel>Actions</DropdownMenuLabel>
+        <DropdownMenuItem onClick={() => {
+          setEditingAnimal(animal);
+          setIsEditDialogOpen(true);
+        }}>
+          Edit
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => handleDeleteAnimal(animal.id)}>
+          Delete
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="flex justify-between items-center mb-6">
@@ -111,7 +146,7 @@ const EditableTableDemo = () => {
         <div className="flex space-x-2">
           <Button variant="outline"><Filter className="mr-2 h-4 w-4" /> Filter</Button>
           <Button variant="outline"><FileOutput className="mr-2 h-4 w-4" /> Export</Button>
-          <Dialog>
+          <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
             <DialogTrigger asChild>
               <Button variant="default"><Plus className="mr-2 h-4 w-4" /> Add Animal</Button>
             </DialogTrigger>
@@ -161,46 +196,7 @@ const EditableTableDemo = () => {
                 <TableCell>{animal.species}</TableCell>
                 <TableCell>{new Date(animal.created_at).toLocaleString()}</TableCell>
                 <TableCell>
-                  <div className="flex space-x-2">
-                    <Dialog>
-                      <DialogTrigger asChild>
-                        <Button variant="outline" size="icon" onClick={() => setEditingAnimal(animal)}>
-                          <Pencil className="h-4 w-4" />
-                        </Button>
-                      </DialogTrigger>
-                      <DialogContent>
-                        <DialogHeader>
-                          <DialogTitle>Edit Animal</DialogTitle>
-                        </DialogHeader>
-                        {editingAnimal && (
-                          <div className="grid gap-4 py-4">
-                            <div className="grid grid-cols-4 items-center gap-4">
-                              <Label htmlFor="edit-name" className="text-right">Name</Label>
-                              <Input id="edit-name" value={editingAnimal.name} onChange={(e) => setEditingAnimal({...editingAnimal, name: e.target.value})} className="col-span-3" />
-                            </div>
-                            <div className="grid grid-cols-4 items-center gap-4">
-                              <Label htmlFor="edit-species" className="text-right">Species</Label>
-                              <Input id="edit-species" value={editingAnimal.species} onChange={(e) => setEditingAnimal({...editingAnimal, species: e.target.value})} className="col-span-3" />
-                            </div>
-                            <div className="grid grid-cols-4 items-center gap-4">
-                              <Label htmlFor="edit-image" className="text-right">Image</Label>
-                              <Input id="edit-image" type="file" onChange={(e) => handleFileChange(e, true)} className="col-span-3" />
-                            </div>
-                            {editingAnimal.image_url && (
-                              <div className="grid grid-cols-4 items-center gap-4">
-                                <Label className="text-right">Current Image</Label>
-                                <img src={editingAnimal.image_url} alt={editingAnimal.name} className="w-24 h-24 object-cover rounded col-span-3" />
-                              </div>
-                            )}
-                          </div>
-                        )}
-                        <Button onClick={handleUpdateAnimal}>Update Animal</Button>
-                      </DialogContent>
-                    </Dialog>
-                    <Button variant="outline" size="icon" onClick={() => handleDeleteAnimal(animal.id)}>
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
+                  <ActionMenu animal={animal} />
                 </TableCell>
               </TableRow>
             ))}
@@ -214,6 +210,36 @@ const EditableTableDemo = () => {
           <Button variant="outline" size="sm">Next</Button>
         </div>
       </div>
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Animal</DialogTitle>
+          </DialogHeader>
+          {editingAnimal && (
+            <div className="grid gap-4 py-4">
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="edit-name" className="text-right">Name</Label>
+                <Input id="edit-name" value={editingAnimal.name} onChange={(e) => setEditingAnimal({...editingAnimal, name: e.target.value})} className="col-span-3" />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="edit-species" className="text-right">Species</Label>
+                <Input id="edit-species" value={editingAnimal.species} onChange={(e) => setEditingAnimal({...editingAnimal, species: e.target.value})} className="col-span-3" />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="edit-image" className="text-right">Image</Label>
+                <Input id="edit-image" type="file" onChange={(e) => handleFileChange(e, true)} className="col-span-3" />
+              </div>
+              {editingAnimal.image_url && (
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label className="text-right">Current Image</Label>
+                  <img src={editingAnimal.image_url} alt={editingAnimal.name} className="w-24 h-24 object-cover rounded col-span-3" />
+                </div>
+              )}
+            </div>
+          )}
+          <Button onClick={handleUpdateAnimal}>Update Animal</Button>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
