@@ -5,27 +5,27 @@ import { Link } from "react-router-dom";
 const dummyDemos = [
   {
     id: 1,
+    title: "Editable Table",
+    description: "Interactive table with editable animal data.",
+    icon: "🐾",
+  },
+  {
+    id: 2,
     title: "Text Generation",
     description: "Generate creative and coherent text based on prompts.",
     icon: "📝",
   },
   {
-    id: 2,
+    id: 3,
     title: "Image Analysis",
     description: "Analyze and describe the content of images.",
     icon: "🖼️",
   },
   {
-    id: 3,
+    id: 4,
     title: "Code Assistant",
     description: "Get help with coding tasks and debugging.",
     icon: "💻",
-  },
-  {
-    id: 4,
-    title: "Language Translation",
-    description: "Translate text between multiple languages.",
-    icon: "🌐",
   },
 ];
 
