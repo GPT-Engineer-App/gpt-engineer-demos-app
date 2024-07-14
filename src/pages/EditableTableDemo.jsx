@@ -9,7 +9,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Filter, FileExport, Plus } from "lucide-react";
+import { Filter, FileOutput, Plus } from "lucide-react";
 
 const initialData = [
   { id: 1, name: "Laser Lemonade Machine", status: "Draft", price: "$499.99", totalSales: 25, createdAt: "2023-07-12 10:42 AM" },
@@ -32,7 +32,7 @@ const EditableTableDemo = () => {
         </div>
         <div className="flex space-x-2">
           <Button variant="outline"><Filter className="mr-2 h-4 w-4" /> Filter</Button>
-          <Button variant="outline"><FileExport className="mr-2 h-4 w-4" /> Export</Button>
+          <Button variant="outline"><FileOutput className="mr-2 h-4 w-4" /> Export</Button>
           <Button variant="default"><Plus className="mr-2 h-4 w-4" /> Add Product</Button>
         </div>
       </div>
