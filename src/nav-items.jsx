@@ -1,6 +1,7 @@
 import { Home } from "lucide-react";
 import Index from "./pages/Index.jsx";
 import DemoPlaceholder from "./pages/DemoPlaceholder.jsx";
+import EditableTableDemo from "./pages/EditableTableDemo.jsx";
 
 export const navItems = [
   {
@@ -12,6 +13,10 @@ export const navItems = [
 ];
 
 export const demoRoutes = [
+  {
+    path: "/demo/editable-table",
+    element: <EditableTableDemo />,
+  },
   {
     path: "/demo/:demoId",
     element: <DemoPlaceholder />,
