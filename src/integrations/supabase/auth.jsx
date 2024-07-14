@@ -50,7 +50,7 @@ export const SupabaseAuthProviderInner = ({ children }) => {
   };
 
   return (
-    <SupabaseAuthContext.Provider value={{ session, loading, logout }}>
+    <SupabaseAuthContext.Provider value={{ session, loading, logout, supabase }}>
       {children}
     </SupabaseAuthContext.Provider>
   );
