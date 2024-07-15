@@ -15,6 +15,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase";
+import { useSupabaseAuth } from "@/integrations/supabase/auth";
+import { useNavigate } from "react-router-dom";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -29,6 +31,8 @@ const EditableTableDemo = () => {
   const addAnimalMutation = useAddAnimal();
   const updateAnimalMutation = useUpdateAnimal();
   const deleteAnimalMutation = useDeleteAnimal();
+  const { session } = useSupabaseAuth();
+  const navigate = useNavigate();
 
   const [editingAnimal, setEditingAnimal] = useState(null);
   const [newAnimal, setNewAnimal] = useState({ name: "", species: "", image_url: "" });
@@ -73,6 +77,12 @@ const EditableTableDemo = () => {
   };
 
   const handleAddAnimal = async () => {
+    if (!session) {
+      toast.error("You must be logged in to add an animal");
+      navigate("/login");
+      return;
+    }
+
     try {
       let imageUrl = newAnimal.image_url;
       if (file) {
@@ -89,6 +99,12 @@ const EditableTableDemo = () => {
   };
 
   const handleUpdateAnimal = async () => {
+    if (!session) {
+      toast.error("You must be logged in to update an animal");
+      navigate("/login");
+      return;
+    }
+
     try {
       let imageUrl = editingAnimal.image_url;
       if (editFile) {
@@ -105,6 +121,12 @@ const EditableTableDemo = () => {
   };
 
   const handleDeleteAnimal = async (id) => {
+    if (!session) {
+      toast.error("You must be logged in to delete an animal");
+      navigate("/login");
+      return;
+    }
+
     try {
       await deleteAnimalMutation.mutateAsync(id);
       toast.success("Animal deleted successfully");
@@ -124,6 +146,11 @@ const EditableTableDemo = () => {
       <DropdownMenuContent align="end">
         <DropdownMenuLabel>Actions</DropdownMenuLabel>
         <DropdownMenuItem onClick={() => {
+          if (!session) {
+            toast.error("You must be logged in to edit an animal");
+            navigate("/login");
+            return;
+          }
           setEditingAnimal(animal);
           setIsEditDialogOpen(true);
         }}>
@@ -148,7 +175,16 @@ const EditableTableDemo = () => {
           <Button variant="outline"><FileOutput className="mr-2 h-4 w-4" /> Export</Button>
           <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
             <DialogTrigger asChild>
-              <Button variant="default"><Plus className="mr-2 h-4 w-4" /> Add Animal</Button>
+              <Button variant="default" onClick={() => {
+                if (!session) {
+                  toast.error("You must be logged in to add an animal");
+                  navigate("/login");
+                  return;
+                }
+                setIsAddDialogOpen(true);
+              }}>
+                <Plus className="mr-2 h-4 w-4" /> Add Animal
+              </Button>
             </DialogTrigger>
             <DialogContent>
               <DialogHeader>
