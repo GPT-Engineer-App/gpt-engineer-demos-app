@@ -61,9 +61,14 @@ const EditableTableDemo = () => {
   const uploadImage = async (file) => {
     const fileExt = file.name.split('.').pop();
     const fileName = `${Math.random()}.${fileExt}`;
+    const filePath = `public/${fileName}`;
     const { data, error } = await supabase.storage
       .from('animals')
-      .upload(fileName, file);
+      .upload(filePath, file, {
+        cacheControl: '3600',
+        upsert: false,
+        contentType: file.type
+      });
 
     if (error) {
       throw error;
@@ -71,7 +76,7 @@ const EditableTableDemo = () => {
 
     const { data: { publicUrl } } = supabase.storage
       .from('animals')
-      .getPublicUrl(fileName);
+      .getPublicUrl(filePath);
 
     return publicUrl;
   };
